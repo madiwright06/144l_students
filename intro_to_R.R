@@ -34,7 +34,7 @@ tail(calfire.data) #shows last 6 lines of data set
 ?names # single ? brings up R doc for that function
 ??names #double ?? brings up every function that might contain "names"
 
-# single columns can be reffered to using a '$'
+# single columns can be referred to using a '$'
 county <- calfire.data$County_Unit
 county
 
@@ -61,7 +61,11 @@ view(df5)
 install.packages("lubridate")
 library(lubridate)
 
-df6 <-  mutate(df5, | | | | | | interv = interval(Start_Date, Controlled_Date), + | | | | | | dur = as.duration(interv))
+df6 <-  mutate(df5, 
+               interv = interval(Start_Date, Controlled_Date), 
+               dur = as.duration(interv),
+               days = as.numeric(dur, "days"))
+view(df6)
 
 ## We used 15 lines to do all of that! Now we have 5 different dataframes! This seems a little inefficient. There is a better way - it's called "piping"
 
@@ -73,7 +77,18 @@ df6 <-  mutate(df5, | | | | | | interv = interval(Start_Date, Controlled_Date), 
 
 # Think of this as a code way of saying "and them..."
 
-socal_fires <- calfire.data %>% filter(County_Unit %in% c("SANTA BARBARA", "VENTURA", "LOS ANGELES", "ORANGE", "SAN DIEGO") & Total_Acres_Burned >= 500 | Fire_Name== "THOMAS") mutate_at(df3, vars(Structures_Destroyed:Civil_Fatalities), replace_na, 0) mutate(Fatalities = Fire_Fatalities + Civil_Fatalities
+socal_fires <- calfire.data %>% 
+  filter(County_Unit %in% c("SANTA BARBARA", "VENTURA", "LOS ANGELES", "ORANGE", "SAN DIEGO") & Total_Acres_Burned >= 500 | Fire_Name== "THOMAS") %>%  
+  mutate_at(vars(Structures_Destroyed:Civil_Fatalities), replace_na, 0) %>%  
+  mutate(Fatalities = Fire_Fatalities + Civil_Fatalities,
+         interv = interval(Start_Date, Controlled_Date),
+         dur = as.duration(interv),
+         days = as.numeric(dur, "days"),
+         County_Unit = ifelse(County_Unit== "VENTURA/SANTA BARBARA", "VENTURA", County_Unit)
+         ) %>% 
+  arrange(desc(Start_Date), Total_Acres_Burned)
+
+view(socal_fires)
 
 #### Our first graphs in ggplot ####
 
@@ -82,5 +97,18 @@ socal_fires <- calfire.data %>% filter(County_Unit %in% c("SANTA BARBARA", "VENT
 # (2) What data you're using (including what should be x and what should be y)
 # (3) Type of graph that you want to create
 
+socal.plot <- socal_fires %>% 
+  rename(start = Start_Date,
+         acres = Total_Acres_Burned,
+         county = County_Unit) %>% 
+  ggplot(aes(x = start, y = acres)) +
+  geom_point(aes(color = county)) +
+  ggtitle("California SoCal Major Fires 2013 - 2018") +
+  xlab("Date") +
+  ylab("Acres Burned") +
+  theme(panel.grid.major = element_blank())
 
+socal.plot + facet_grid(~county)
+view(socal.plot)
 
+library("tidyverse")
