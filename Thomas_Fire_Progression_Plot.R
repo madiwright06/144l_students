@@ -40,14 +40,24 @@ thomas.fires <- data %>%
 
 ##### ggplot #####
 
-ggplot(thomas.fires, aes(x = Date, y = Acres_Burned)) +
+progression.plot <- thomas.fires %>% 
+  ggplot(aes(x = Date, y = Acres_Burned)) +
   geom_point(aes(color = Containment)) +
   ggtitle("2017 - 2018 Thomas Fire Progression") +
   labs(x = "Date", y = "Total Acres Burned") +
   theme_dark()
 
-ggplot(df2, aes(x = Acres_Burned, y = PM25)) +
+
+air_quality.plot <- df2 %>% 
+  ggplot(aes(x = Acres_Burned, y = PM25)) +
   geom_point() +
   ggtitle ("Acres Burned Associated with Air Quality") +
   labs(x = "Amount of Acres Burned", y = "Particulate Matter Smaller Than 10 Microns In Diameter")
+
+#### Save Data and Plots ####
+
+saveRDS(thomas.fires, file = "Output_Data/week 1/Thomas_Fires_Plots.rds")
+write_csv(thomas.fires, "Output_Data/week 1/Thomas_Fires_Plots.csv")
+
+ggsave(filename = "Thomas_Fire_Data", progression.plot, device = "jpeg", "Output_Data/week 1/")
   
