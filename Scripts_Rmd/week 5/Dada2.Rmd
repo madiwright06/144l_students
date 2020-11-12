@@ -1,0 +1,21 @@
+---
+title: "DADA2"
+author: "Madison Wright"
+date: "11/11/2020"
+output: github_document
+---
+
+This script processes trimmed (w/o primers) sequences through the [DADA2 pipline (v 1.16)](https://benjjneb.github.io/dada2/tutorial.html), which can be installed following these [steps](https://benjjneb.github.io/dada2/dada-installation.html) 
+
+# Install and Load DADA2 and ShortRead from Bioconductor
+
+```{r}
+# if (!requireNamespace("BiocManager", quietly = TRUE))
+#   install.packages("BiocManager")
+# BiocManager::install("dada2", version = "3.11")
+# BiocManager::install("ShortRead")
+```
+```{r}
+# BiocManager::install(version = '3.11')
+```
+
