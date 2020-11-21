@@ -19,3 +19,179 @@ This script processes trimmed (w/o primers) sequences through the [DADA2 pipline
 # BiocManager::install(version = '3.11')
 ```
 
+```{r}
+library(tidyverse)
+library(dada2)
+library(ShortRead)
+```
+
+# Import file names
+
+```{r}
+path <- "~/Desktop/Github/144l_students/Input_Data/week5/EEMB144L_2018_fastq/"
+
+#store the names of the forward and rev files as lists
+fnFs <- list.files(path, pattern = "_R1_001.fastq", full.names = TRUE)
+fnRs <- list.files(path, pattern = "_R2_001.fastq", full.names = TRUE)
+```
+
+# Retrieve orientation of primers
+
+The primers targeted the V4 region and are known 514F-Y and 806RB primers (see Apprill et al., 2015)[http://www.int-res.com/articles/ame_oa/a075p129.pdf]
+
+```{r}
+#store the  forward and reverse primers
+FWD = "GTGYCAGCMGCCGCGGTAA"
+REV = "GGACTACNVGGGTWTCTAAT"
+
+#now store all the orientations of your forward and reverse  primers
+allOrients <- function(primer) {
+  # The Biostrings works w/ DNAString objects rather than character vectors
+  require(Biostrings)
+  dna <- DNAString(primer) 
+  orients <- c(Forward = dna, Complement = complement(dna), Reverse = reverse(dna), 
+               RevComp = reverseComplement(dna))
+  # Convert back to character vector
+  return(sapply(orients, toString))  
+}
+#store the fwd and reverse oreintations separately
+FWD.orients <- allOrients(FWD)
+REV.orients <- allOrients(REV)
+
+#view the orientations of the primers
+FWD.orients
+```
+```{r}
+REV.orients
+```
+
+# search for Primers
+```{r}
+primerHits <- function(primer, fn) {
+  # Counts number of reads in which the primer is found
+  nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
+  return(sum(nhits > 0))
+}
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs[[1]]), 
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs[[1]]), 
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs[[1]]), 
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs[[1]]))
+
+```
+
+# Inspect read quality profiles 
+
+## forward reads
+```{r fig.height=10, fig.width=12}
+plotQualityProfile(fnFs[1:12])
+```
+
+## Reverse reads
+
+```{r fig.height=10, fig.width=12}
+plotQualityProfile(fnRs[1:12])
+```
+
+# Filtering and Trimming
+
+```{r}
+sample.names <- sapply(strsplit(basename(fnFs),"_L"), `[`,1)
+sample.names
+#create a "filtered" folder in the working directory as a place to put all the new filtered fastQ files
+filt_path <- file.path(path,"filtered")
+#add the appropriate designation string to any new files made that will be put into the "filtered" folder
+filtFs <- file.path(filt_path, paste0(sample.names, "_F_filt.fastq"))
+filtRs <- file.path(filt_path, paste0(sample.names, "_R_filt.fastq"))
+```
+
+```{r}
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen = c(200,150),  maxN = 0, maxEE = c(2,2), truncQ = 2, rm.phix = TRUE, compress = TRUE) 
+out
+```
+
+# Learn the error rates
+
+```{r}
+errF <- learnErrors(filtFs, multithread = TRUE)
+errR <- learnErrors(filtRs, multithread = TRUE)
+```
+
+```{r echo = FALSE, warning = FALSE, message = FALSE, fig.height = 10, fig.width = 12, fig.align = "center", warning = FALSE}
+plotErrors(errF, nominalQ = TRUE)
+```
+
+```{r echo = FALSE, warning = FALSE, message = FALSE, fig.height = 10, fig.width = 12, fig.align = "center", warning = FALSE}
+plotErrors(errR, nominalQ = TRUE)
+```
+
+# Dereplication
+
+```{r}
+derepFs <- derepFastq(filtFs, verbose = TRUE)
+derepRs <- derepFastq(filtRs, verbose = TRUE)
+# Name the derep-class objects by the sample names
+names(derepFs) <- sample.names
+names(derepRs) <- sample.names
+```
+
+# Infer the sequence variants
+
+```{r}
+dadaFs <- dada(derepFs, err = errF, multithread = TRUE)
+dadaRs <- dada(derepRs, err = errR, multithread = TRUE)
+```
+
+```{r}
+mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose = TRUE, trimOverhang = T)
+```
+```{r}
+head(mergers[[1]])
+```
+```{r}
+saveRDS(mergers, "~/Desktop/Github/144l_students/Output_Data/week 5/dada_merged.rds")
+saveRDS(mergers, "~/Desktop/Github/144l_students/Input_Data/week 6/dada_merged.rds")
+```
+
+# Sequence Table
+```{r}
+seqtab <- makeSequenceTable(mergers)
+dim(seqtab) # samples by unique sequence
+```
+```{r}
+table(nchar(getSequences(seqtab)))
+```
+
+# Remove the Chimeras
+
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, verbose = TRUE)
+dim(seqtab.nochim)
+```
+```{r}
+sum(seqtab.nochim)/sum(seqtab)
+```
+
+# Assign taxonomy using a reference database
+
+```{r}
+taxa <- assignTaxonomy(seqtab.nochim, "~/Desktop/Github/144l_students/Input_Data/week5/Reference_Database/silva_nr_v138_train_set.fa", multithread = TRUE)
+```
+
+```{r}
+saveRDS(t(seqtab.nochim), "~/Desktop/Github/144l_students/Output_Data/week 5/seqtab-nochimtaxa.rds")
+saveRDS(taxa,"~/Desktop/Github/144l_students/Output_Data/week 5/taxa.rds")
+
+saveRDS(t(seqtab.nochim), "~/Desktop/Github/144l_students/Input_Data/week 6/seqtab-nochimtaxa.rds")
+saveRDS(taxa,"~/Desktop/Github/144l_students/Input_Data/week 6/taxa.rds")
+```
+
+
+
+
+
+
+
+
+
+
+

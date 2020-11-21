@@ -1,0 +1,13 @@
+---
+title: "bacterial_abundance"
+author: "Madison Wright"
+date: "11/13/2020"
+output: github_document
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(lubridate)
+```
+

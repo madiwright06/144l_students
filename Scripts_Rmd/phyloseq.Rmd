@@ -1,0 +1,31 @@
+---
+title: "Phyloseq"
+author: "Madison Wright"
+date: "11/20/2020"
+output: github_document
+---
+
+# Install phyloseq
+```{r}
+# BiocManager::install("phyloseq")
+```
+
+```{r message = F, warning = F}
+library(tidyverse) 
+library(phyloseq)
+library(RColorBrewer)
+```
+
+# Import Data
+```{r message = F}
+count.tab <- read_rds("Input_Data/week 6/seqtab-nochimtaxa.rds") #table of counts for each sequence in each sample
+tax.tab <- read_rds("Input_Data/week 6/taxa.rds") #table that matches ASV to sequence
+sample.tab <- read_rds("")
+```
+
+
+
+
+
+
+
