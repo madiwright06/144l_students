@@ -13,13 +13,13 @@ library(dplyr)
 # import data
 
 ``` r
-excel_sheets("Input_Data/week3/144L_2018_BactAbund.xlsx")
+excel_sheets("~/Desktop/Github/144l_students/Input_Data/week3/144L_2018_BactAbund.xlsx")
 ```
 
     ## [1] "Metadata" "Data"
 
 ``` r
-metadata <- read_excel("Input_Data/week3/144L_2018_BactAbund.xlsx", sheet = "Metadata")
+metadata <- read_excel("~/Desktop/Github/144l_students/Input_Data/week3/144L_2018_BactAbund.xlsx", sheet = "Metadata")
 glimpse(metadata)
 ```
 
@@ -47,7 +47,7 @@ glimpse(metadata)
 # unique(metadata$Bottle)
 # unique(metadata$Treatment)
 
-data <- read_excel("Input_Data/week3/144L_2018_BactAbund.xlsx", sheet = "Data")
+data <- read_excel("~/Desktop/Github/144l_students/Input_Data/week3/144L_2018_BactAbund.xlsx", sheet = "Data")
 glimpse(data)
 ```
 
@@ -376,7 +376,7 @@ trt_ba
 ![](Bacterial_Abundance_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
-saveRDS(trt_ba, "Output_Data/week 3/144L_trt_ba_plot.rds")
+saveRDS(trt_ba, "~/Desktop/Github/144l_students/Output_Data/week 3/144L_trt_ba_plot.rds")
 ```
 
 ## Barplots
@@ -437,5 +437,5 @@ delta_bc + mew + doubling + plot_annotation(tag_levels = "a")
 # save data
 
 ``` r
-saveRDS(averages, "Output_Data/week 3/144L_Exp_Processed_BactAbund.rds")
+saveRDS(averages, "~/Desktop/Github/144l_students/Output_Data/week 3/144L_Exp_Processed_BactAbund.rds")
 ```
